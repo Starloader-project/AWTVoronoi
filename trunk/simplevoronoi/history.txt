@@ -18,3 +18,9 @@ Version 0.2:
 * modified floats to doubles to improve accuracy
 * Improved encapsulation
 * Removed all graphics display code
+
+Version 0.3:
+============
+* fleshed out the unit test
+* Refactored to simplify subclassing
+* Added a sample subclass (us.molini.graph.GraphFactory)

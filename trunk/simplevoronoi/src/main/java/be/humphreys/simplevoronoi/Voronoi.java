@@ -49,6 +49,9 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+/** See http://en.wikipedia.org/wiki/Fortune%27s_algorithm
+ *
+ */
 public class Voronoi
 {
     // ************* Private members ******************
@@ -73,7 +76,7 @@ public class Voronoi
     private int ELhashsize;
     private Halfedge ELhash[];
     private Halfedge ELleftend, ELrightend;
-    private List<GraphEdge> allEdges;
+    protected List<GraphEdge> allEdges;
 
     /*********************************************************
      * Public methods
@@ -101,8 +104,31 @@ public class Voronoi
     public List<GraphEdge> generateVoronoi(double[] xValuesIn, double[] yValuesIn,
             double minX, double maxX, double minY, double maxY)
     {
-        sort(xValuesIn, yValuesIn, xValuesIn.length);
+    	//sites = null;
+        allEdges = new LinkedList<GraphEdge>();
 
+        int count = xValuesIn.length;
+        ArrayList<Site> input = new ArrayList<Site>();
+       
+        // Copy the inputs so we don't modify the originals
+        for (int i = 0; i < count; i++)
+        {
+        	Site s = new Site();
+        	s.coord.x = xValuesIn[i];
+        	s.coord.y = yValuesIn[i];
+        	s.sitenbr = i;
+        	input.add(s);
+        }
+        sortNode(input);
+
+        setBorder(minX, maxX, minY, maxY);
+        
+        voronoi_bd();
+
+        return allEdges;
+    }
+    
+    protected void setBorder(double minX, double maxX, double minY, double maxY) {
         // Check bounding box inputs - if mins are bigger than maxes, swap them
         double temp = 0;
         if (minX > maxX)
@@ -121,11 +147,6 @@ public class Voronoi
         borderMinY = minY;
         borderMaxX = maxX;
         borderMaxY = maxY;
-
-        siteidx = 0;
-        voronoi_bd();
-
-        return allEdges;
     }
 
 
@@ -133,29 +154,6 @@ public class Voronoi
      /*********************************************************
      * Private methods - implementation details
      ********************************************************/
-
-    private void sort(double[] xValuesIn, double[] yValuesIn, int count)
-    {
-        sites = null;
-        allEdges = new LinkedList<GraphEdge>();
-
-        nsites = count;
-        nvertices = 0;
-        nedges = 0;
-
-        double sn = (double) nsites + 4;
-        sqrt_nsites = (int) Math.sqrt(sn);
-
-        // Copy the inputs so we don't modify the originals
-        double[] xValues = new double[count];
-        double[] yValues = new double[count];
-        for (int i = 0; i < count; i++)
-        {
-            xValues[i] = xValuesIn[i];
-            yValues[i] = yValuesIn[i];
-        }
-        sortNode(xValues, yValues, count);
-    }
 
     private void qsort(Site[] sites)
     {
@@ -198,35 +196,41 @@ public class Voronoi
         }
     }
 
-    private void sortNode(double xValues[], double yValues[], int numPoints)
+    protected void sortNode(List<Site> input)
     {
         int i;
-        nsites = numPoints;
+        nsites = input.size();
+        nvertices = 0;
+        nedges = 0;
+        
+        double sn = (double) nsites + 4;
+        sqrt_nsites = (int) Math.sqrt(sn);
+        
         sites = new Site[nsites];
-        xmin = xValues[0];
-        ymin = yValues[0];
-        xmax = xValues[0];
-        ymax = yValues[0];
+        Site first = input.get(0);
+        xmin = first.coord.x;
+        ymin = first.coord.y;
+        xmax = first.coord.x;
+        ymax = first.coord.y;
         for (i = 0; i < nsites; i++)
         {
-            sites[i] = new Site();
-            sites[i].coord.setPoint(xValues[i], yValues[i]);
-            sites[i].sitenbr = i;
-
-            if (xValues[i] < xmin)
+        	Site s = input.get(i).clone();
+            sites[i] = s;
+     
+            if (s.coord.x < xmin)
             {
-                xmin = xValues[i];
-            } else if (xValues[i] > xmax)
+                xmin = s.coord.x;
+            } else if (s.coord.x > xmax)
             {
-                xmax = xValues[i];
+                xmax = s.coord.x;
             }
 
-            if (yValues[i] < ymin)
+            if (s.coord.y < ymin)
             {
-                ymin = yValues[i];
-            } else if (yValues[i] > ymax)
+                ymin = s.coord.y;
+            } else if (s.coord.y > ymax)
             {
-                ymax = yValues[i];
+                ymax = s.coord.y;
             }
         }
         qsort(sites);
@@ -861,7 +865,7 @@ public class Voronoi
      * deltay (can all be estimates). Performance suffers if they are wrong;
      * better to make nsites, deltax, and deltay too big than too small. (?)
      */
-    private boolean voronoi_bd()
+    protected boolean voronoi_bd()
     {
         Site newsite, bot, top, temp, p;
         Site v;
@@ -872,6 +876,7 @@ public class Voronoi
 
         PQinitialize();
         ELinitialize();
+        siteidx = 0;
 
         bottomsite = nextone();
         newsite = nextone();
