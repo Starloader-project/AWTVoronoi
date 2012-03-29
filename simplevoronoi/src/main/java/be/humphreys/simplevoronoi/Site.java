@@ -31,11 +31,18 @@ package be.humphreys.simplevoronoi;
 // used both for sites and for vertices
 public class Site
 {
-    Point coord;
-    int sitenbr;
+    public Point coord;
+    public int sitenbr;
 
     public Site()
     {
         coord = new Point();
     }
+
+	public Site clone() {
+		Site result = new Site();
+		result.coord.setPoint(coord.x, coord.y);
+		result.sitenbr = sitenbr;
+		return result;
+	}
 }
