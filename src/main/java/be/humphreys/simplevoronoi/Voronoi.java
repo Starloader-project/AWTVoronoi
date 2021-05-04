@@ -1,5 +1,7 @@
 package be.humphreys.simplevoronoi;
 
+import java.awt.geom.Point2D;
+
 /*
  * The author of this software is Steven Fortune.  Copyright (c) 1994 by AT&T
  * Bell Laboratories.
@@ -44,13 +46,15 @@ package be.humphreys.simplevoronoi;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-/** See http://en.wikipedia.org/wiki/Fortune%27s_algorithm
- *
+/**
+ * See http://en.wikipedia.org/wiki/Fortune%27s_algorithm
+ * Originating from https://web.archive.org/web/20161223214948/http://mapviewer.skynet.ie/java/voronoi_java.zip
  */
 public class Voronoi
 {
@@ -99,25 +103,25 @@ public class Voronoi
      * @param maxX The maximum X of the bounding box around the voronoi
      * @param minY The minimum Y of the bounding box around the voronoi
      * @param maxY The maximum Y of the bounding box around the voronoi
-     * @return
+     * @return The generated voronoi edges
      */
     public List<GraphEdge> generateVoronoi(double[] xValuesIn, double[] yValuesIn,
             double minX, double maxX, double minY, double maxY)
     {
-    	//sites = null;
-        allEdges = new LinkedList<GraphEdge>();
+        //sites = null;
+        allEdges = new LinkedList<>();
 
         int count = xValuesIn.length;
-        ArrayList<Site> input = new ArrayList<Site>();
+        ArrayList<Site> input = new ArrayList<>();
        
         // Copy the inputs so we don't modify the originals
         for (int i = 0; i < count; i++)
         {
-        	Site s = new Site();
-        	s.coord.x = xValuesIn[i];
-        	s.coord.y = yValuesIn[i];
-        	s.sitenbr = i;
-        	input.add(s);
+            Site s = new Site();
+            s.x = xValuesIn[i];
+            s.y = yValuesIn[i];
+            s.sitenbr = i;
+            input.add(s);
         }
         sortNode(input);
 
@@ -127,7 +131,7 @@ public class Voronoi
 
         return allEdges;
     }
-    
+
     protected void setBorder(double minX, double maxX, double minY, double maxY) {
         // Check bounding box inputs - if mins are bigger than maxes, swap them
         double temp = 0;
@@ -157,43 +161,33 @@ public class Voronoi
 
     private void qsort(Site[] sites)
     {
-        List<Site> listSites = new ArrayList<Site>(sites.length);
-        for (Site s: sites)
-        {
-            listSites.add(s);
-        }
+        // The returning list is backed by the array; so no need to copy it back!
+        List<Site> listSites = Arrays.asList(sites);
 
         Collections.sort(listSites, new Comparator<Site>()
         {
             @Override
             public final int compare(Site p1, Site p2)
             {
-                Point s1 = p1.coord, s2 = p2.coord;
-                if (s1.y < s2.y)
+                if (p1.y < p2.y)
                 {
                     return (-1);
                 }
-                if (s1.y > s2.y)
+                if (p1.y > p2.y)
                 {
                     return (1);
                 }
-                if (s1.x < s2.x)
+                if (p1.x < p2.x)
                 {
                     return (-1);
                 }
-                if (s1.x > s2.x)
+                if (p1.x > p2.x)
                 {
                     return (1);
                 }
                 return (0);
             }
         });
-
-        // Copy back into the array
-        for (int i=0; i<sites.length; i++)
-        {
-            sites[i] = listSites.get(i);
-        }
     }
 
     protected void sortNode(List<Site> input)
@@ -208,29 +202,29 @@ public class Voronoi
         
         sites = new Site[nsites];
         Site first = input.get(0);
-        xmin = first.coord.x;
-        ymin = first.coord.y;
-        xmax = first.coord.x;
-        ymax = first.coord.y;
+        xmin = first.x;
+        ymin = first.y;
+        xmax = first.x;
+        ymax = first.y;
         for (i = 0; i < nsites; i++)
         {
-        	Site s = input.get(i).clone();
+            Site s = (Site) input.get(i).clone();
             sites[i] = s;
      
-            if (s.coord.x < xmin)
+            if (s.x < xmin)
             {
-                xmin = s.coord.x;
-            } else if (s.coord.x > xmax)
+                xmin = s.x;
+            } else if (s.x > xmax)
             {
-                xmax = s.coord.x;
+                xmax = s.x;
             }
 
-            if (s.coord.y < ymin)
+            if (s.y < ymin)
             {
-                ymin = s.coord.y;
-            } else if (s.coord.y > ymax)
+                ymin = s.y;
+            } else if (s.y > ymax)
             {
-                ymax = s.coord.y;
+                ymax = s.y;
             }
         }
         qsort(sites);
@@ -269,13 +263,13 @@ public class Voronoi
         newedge.ep[1] = null;
 
         // get the difference in x dist between the sites
-        dx = s2.coord.x - s1.coord.x;
-        dy = s2.coord.y - s1.coord.y;
+        dx = s2.x - s1.x;
+        dy = s2.y - s1.y;
         // make sure that the difference in positive
         adx = dx > 0 ? dx : -dx;
         ady = dy > 0 ? dy : -dy;
-        newedge.c = (double) (s1.coord.x * dx + s1.coord.y * dy + (dx * dx + dy
-                * dy) * 0.5);// get the slope of the line
+        // get the slope of the line
+        newedge.c = s1.x * dx + s1.y * dy + (dx * dx + dy * dy) * 0.5;
 
         if (adx > ady)
         {
@@ -341,10 +335,10 @@ public class Voronoi
         Halfedge last, next;
 
         he.vertex = v;
-        he.ystar = (double) (v.coord.y + offset);
+        he.ystar = v.y + offset;
         last = PQhash[PQbucket(he)];
         while ((next = last.PQnext) != null
-                && (he.ystar > next.ystar || (he.ystar == next.ystar && v.coord.x > next.vertex.coord.x)))
+                && (he.ystar > next.ystar || (he.ystar == next.ystar && v.x > next.vertex.x)))
         {
             last = next;
         }
@@ -377,15 +371,15 @@ public class Voronoi
         return (PQcount == 0);
     }
 
-    private Point PQ_min()
+    private Point2D PQ_min()
     {
-        Point answer = new Point();
+        Point2D.Double answer = new Point2D.Double();
 
         while (PQhash[PQmin].PQnext == null)
         {
             PQmin += 1;
         }
-        answer.x = PQhash[PQmin].PQnext.vertex.coord.x;
+        answer.x = PQhash[PQmin].PQnext.vertex.x;
         answer.y = PQhash[PQmin].PQnext.ystar;
         return (answer);
     }
@@ -491,7 +485,7 @@ public class Voronoi
         return (null);
     }
 
-    private Halfedge ELleftbnd(Point p)
+    private Halfedge ELleftbnd(Point2D p)
     {
         int i, bucket;
         Halfedge he;
@@ -499,7 +493,7 @@ public class Voronoi
         /* Use hash table to get close to desired halfedge */
         // use the hash function to find the place in the hash map that this
         // HalfEdge should be
-        bucket = (int) ((p.x - xmin) / deltax * ELhashsize);
+        bucket = (int) ((p.getX() - xmin) / deltax * ELhashsize);
 
         // make sure that the bucket position in within the range of the hash
         // array
@@ -576,10 +570,10 @@ public class Voronoi
         Site s1, s2;
         double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
 
-        x1 = e.reg[0].coord.x;
-        x2 = e.reg[1].coord.x;
-        y1 = e.reg[0].coord.y;
-        y2 = e.reg[1].coord.y;
+        x1 = e.reg[0].x;
+        x2 = e.reg[1].x;
+        y1 = e.reg[0].y;
+        y2 = e.reg[1].y;
 
         // if the distance between the two points this line was created from is
         // less than the square root of 2, then ignore it
@@ -605,9 +599,9 @@ public class Voronoi
         if (e.a == 1.0)
         {
             y1 = pymin;
-            if (s1 != null && s1.coord.y > pymin)
+            if (s1 != null && s1.y > pymin)
             {
-                y1 = s1.coord.y;
+                y1 = s1.y;
             }
             if (y1 > pymax)
             {
@@ -615,9 +609,9 @@ public class Voronoi
             }
             x1 = e.c - e.b * y1;
             y2 = pymax;
-            if (s2 != null && s2.coord.y < pymax)
+            if (s2 != null && s2.y < pymax)
             {
-                y2 = s2.coord.y;
+                y2 = s2.y;
             }
 
             if (y2 < pymin)
@@ -652,9 +646,9 @@ public class Voronoi
         } else
         {
             x1 = pxmin;
-            if (s1 != null && s1.coord.x > pxmin)
+            if (s1 != null && s1.x > pxmin)
             {
-                x1 = s1.coord.x;
+                x1 = s1.x;
             }
             if (x1 > pxmax)
             {
@@ -662,9 +656,9 @@ public class Voronoi
             }
             y1 = e.c - e.a * x1;
             x2 = pxmax;
-            if (s2 != null && s2.coord.x < pxmax)
+            if (s2 != null && s2.x < pxmax)
             {
-                x2 = s2.coord.x;
+                x2 = s2.x;
             }
             if (x2 < pxmin)
             {
@@ -711,7 +705,7 @@ public class Voronoi
     }
 
     /* returns 1 if p is to right of halfedge e */
-    private boolean right_of(Halfedge el, Point p)
+    private boolean right_of(Halfedge el, Point2D p)
     {
         Edge e;
         Site topsite;
@@ -721,7 +715,7 @@ public class Voronoi
 
         e = el.ELedge;
         topsite = e.reg[1];
-        if (p.x > topsite.coord.x)
+        if (p.getX() > topsite.x)
         {
             right_of_site = true;
         } else
@@ -739,8 +733,8 @@ public class Voronoi
 
         if (e.a == 1.0)
         {
-            dyp = p.y - topsite.coord.y;
-            dxp = p.x - topsite.coord.x;
+            dyp = p.getY() - topsite.y;
+            dxp = p.getX() - topsite.x;
             fast = false;
             if ((!right_of_site & (e.b < 0.0)) | (right_of_site & (e.b >= 0.0)))
             {
@@ -748,7 +742,7 @@ public class Voronoi
                 fast = above;
             } else
             {
-                above = p.x + p.y * e.b > e.c;
+                above = p.getX() + p.getY() * e.b > e.c;
                 if (e.b < 0.0)
                 {
                     above = !above;
@@ -760,7 +754,7 @@ public class Voronoi
             }
             if (!fast)
             {
-                dxs = topsite.coord.x - (e.reg[0]).coord.x;
+                dxs = topsite.x - e.reg[0].x;
                 above = e.b * (dxp * dxp - dyp * dyp) < dxs * dyp
                         * (1.0 + 2.0 * dxp / dxs + e.b * e.b);
                 if (e.b < 0.0)
@@ -771,10 +765,10 @@ public class Voronoi
         } else /* e.b==1.0 */
 
         {
-            yl = e.c - e.a * p.x;
-            t1 = p.y - yl;
-            t2 = p.x - topsite.coord.x;
-            t3 = yl - topsite.coord.y;
+            yl = e.c - e.a * p.getX();
+            t1 = p.getY() - yl;
+            t2 = p.getX() - topsite.x;
+            t3 = yl - topsite.y;
             above = t1 * t1 > t2 * t2 + t3 * t3;
         }
         return (el.ELpm == LE ? above : !above);
@@ -782,7 +776,7 @@ public class Voronoi
 
     private Site rightreg(Halfedge he)
     {
-        if (he.ELedge == (Edge) null)
+        if (he.ELedge == null)
         // if this halfedge has no edge, return the bottom site (whatever
         // that is)
         {
@@ -796,10 +790,8 @@ public class Voronoi
 
     private double dist(Site s, Site t)
     {
-        double dx, dy;
-        dx = s.coord.x - t.coord.x;
-        dy = s.coord.y - t.coord.y;
-        return (double) (Math.sqrt(dx * dx + dy * dy));
+        // TODO check if we can be naughty and return distanceSquared instead :)
+        return s.distance(t);
     }
 
     // create a new site where the HalfEdges el1 and el2 intersect - note that
@@ -834,8 +826,8 @@ public class Voronoi
         xint = (e1.c * e2.b - e2.c * e1.b) / d;
         yint = (e2.c * e1.a - e1.c * e2.a) / d;
 
-        if ((e1.reg[1].coord.y < e2.reg[1].coord.y)
-                || (e1.reg[1].coord.y == e2.reg[1].coord.y && e1.reg[1].coord.x < e2.reg[1].coord.x))
+        if ((e1.reg[1].y < e2.reg[1].y)
+                || (e1.reg[1].y == e2.reg[1].y && e1.reg[1].x < e2.reg[1].x))
         {
             el = el1;
             e = e1;
@@ -845,7 +837,7 @@ public class Voronoi
             e = e2;
         }
 
-        right_of_site = xint >= e.reg[1].coord.x;
+        right_of_site = xint >= e.reg[1].x;
         if ((right_of_site && el.ELpm == LE)
                 || (!right_of_site && el.ELpm == RE))
         {
@@ -855,8 +847,8 @@ public class Voronoi
         // create a new site at the point of intersection - this is a new vector
         // event waiting to happen
         v = new Site();
-        v.coord.x = xint;
-        v.coord.y = yint;
+        v.x = xint;
+        v.y = yint;
         return (v);
     }
 
@@ -869,7 +861,7 @@ public class Voronoi
     {
         Site newsite, bot, top, temp, p;
         Site v;
-        Point newintstar = null;
+        Point2D newintstar = null;
         int pm;
         Halfedge lbnd, rbnd, llbnd, rrbnd, bisector;
         Edge e;
@@ -891,11 +883,11 @@ public class Voronoi
             // process the site otherwise process the vector intersection
 
             if (newsite != null
-                    && (PQempty() || newsite.coord.y < newintstar.y || (newsite.coord.y == newintstar.y && newsite.coord.x < newintstar.x)))
+                    && (PQempty() || newsite.y < newintstar.getY() || (newsite.y == newintstar.getY() && newsite.x < newintstar.getY())))
             {
                 /* new site is smallest -this is a site event */
                 // get the first HalfEdge to the LEFT of the new site
-                lbnd = ELleftbnd((newsite.coord));
+                lbnd = ELleftbnd((newsite));
                 // get the first HalfEdge to the RIGHT of the new site
                 rbnd = ELright(lbnd);
                 // if this halfedge has no edge,bot =bottom site (whatever that
@@ -968,7 +960,7 @@ public class Voronoi
                 // to it in Hash Map
                 pm = LE; // set the pm variable to zero
 
-                if (bot.coord.y > top.coord.y)
+                if (bot.y > top.y)
                 // if the site to the left of the event is higher than the
                 // Site
                 { // to the right of it, then swap them and set the 'pm'

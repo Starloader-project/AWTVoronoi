@@ -1,12 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>be.humphreys</groupId>
-    <artifactId>simplevoronoi</artifactId>
+    <groupId>de.geolykt.starloader</groupId>
+    <artifactId>awtvoronoi</artifactId>
     <packaging>jar</packaging>
-    <version>0.2-SNAPSHOT</version>
-    <name>Simple Voronoi Library</name>
-    <url>http://maven.apache.org</url>
+    <version>0.4-SNAPSHOT</version>
+    <name>AWTVoronoi</name>
+    <description>Simple Voronoi Library that makes use of Java AWT components.</description>
+    <url>https://github.com/Starloader-project/AWTVoronoi</url>
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -22,10 +23,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <!-- best lock down version of the plugin too -->
+                    <version>3.8.1</version>
+                    <!-- We compile for Java 11 because Starloader endorses this version
+                        (for now, I'm looking to bump that to 17 once Java 17 is released) -->
                     <configuration>
-                        <source>1.6</source>
-                        <target>1.6</target>
+                        <source>11</source>
+                        <target>11</target>
                     </configuration>
                 </plugin>
             </plugins>

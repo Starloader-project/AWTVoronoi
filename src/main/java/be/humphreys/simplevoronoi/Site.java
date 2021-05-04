@@ -1,5 +1,6 @@
 /*
-  Copyright 2011 James Humphreys. All rights reserved.
+  Copyright 2011 James Humphreys. All rights reserved. (???)
+  Copyright 2021 Geolykt
 
 Redistribution and use in source and binary forms, with or without modification, are
 permitted provided that the following conditions are met:
@@ -28,21 +29,15 @@ or implied, of James Humphreys.
 
 package be.humphreys.simplevoronoi;
 
+import java.awt.geom.Point2D;
+
 // used both for sites and for vertices
-public class Site
+public class Site extends Point2D.Double 
 {
-    public Point coord;
+    /**
+     * serialVersionUID.
+     */
+    private static final long serialVersionUID = 6368222598449808861L;
+
     public int sitenbr;
-
-    public Site()
-    {
-        coord = new Point();
-    }
-
-	public Site clone() {
-		Site result = new Site();
-		result.coord.setPoint(coord.x, coord.y);
-		result.sitenbr = sitenbr;
-		return result;
-	}
 }

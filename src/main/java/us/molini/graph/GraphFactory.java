@@ -1,29 +1,29 @@
 package us.molini.graph;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import be.humphreys.simplevoronoi.GraphEdge;
 import be.humphreys.simplevoronoi.Voronoi;
-import be.humphreys.simplevoronoi.Point;
 
 import be.humphreys.simplevoronoi.Site;
 
 public class GraphFactory extends Voronoi {
-	
-	List<Site> allNeighbors;
-	boolean gotNeighbors;
-	
-	public GraphFactory() {
-		this(0.0);
-	}
 
-	public GraphFactory(double minDistanceBetweenSites) {
-		super(minDistanceBetweenSites);
-	}
-	
-	/**
+    List<Site> allNeighbors;
+    boolean gotNeighbors;
+
+    public GraphFactory() {
+        this(0.0);
+    }
+
+    public GraphFactory(double minDistanceBetweenSites) {
+        super(minDistanceBetweenSites);
+    }
+
+    /**
      * Build a graph containing the given set of points.
      * @param p the points for the graph.
      * @param minX The minimum X of the bounding box around the graph.
@@ -32,19 +32,18 @@ public class GraphFactory extends Voronoi {
      * @param maxY The maximum Y of the bounding box around the graph.
      * @return the Voronoi partitioning of the graph.
      */
-    public List<GraphEdge> generateVoronoi(Point[] p,
-            double minX, double maxX, double minY, double maxY)
+    public List<GraphEdge> generateVoronoi(Point2D[] p, double minX, double maxX, double minY, double maxY)
     {
-    	 allEdges = new LinkedList<GraphEdge>();
-    	 allNeighbors = new ArrayList<Site>();
+        allEdges = new LinkedList<>();
+        allNeighbors = new ArrayList<>();
 
          int count = p.length;
         
          // Copy the inputs so we don't modify the originals
          for (int i = 0; i < count; i++)
          {
-        	 Neighborhood hood = new Neighborhood(p[i],i);
-        	 allNeighbors.add(hood);
+             Neighborhood hood = new Neighborhood(p[i],i);
+             allNeighbors.add(hood);
          }
          sortNode( allNeighbors);
 
@@ -58,7 +57,7 @@ public class GraphFactory extends Voronoi {
     
     /** Return the number of sites in the latest graph. */
     public int size() {
-    	return allNeighbors.size();
+        return allNeighbors.size();
     }
     
     /** Get a neighborhood.
@@ -67,38 +66,38 @@ public class GraphFactory extends Voronoi {
      * of the adjacent points.
      */
     public Neighborhood getNeighborhood(int n) {
-    	if (!gotNeighbors) findNeighbors();
-    	
-    	return (Neighborhood) allNeighbors.get(n);
+        if (!gotNeighbors)
+            findNeighbors();
+        return (Neighborhood) allNeighbors.get(n);
     }
-    
+
     // Extract the site information from the Voronoi edges and save them as references.
     private void findNeighbors() {
-    	for(GraphEdge e:allEdges) {
-    		Neighborhood hood1 = (Neighborhood) allNeighbors.get(e.site1);
-    		Neighborhood hood2 = (Neighborhood) allNeighbors.get(e.site2);
-    		hood1.neighbor.add(hood2);
-    		hood2.neighbor.add(hood1);
-    	}
-    	// Clear the visit values.
-    	for( Site s: allNeighbors) {
-    		Neighborhood hood = (Neighborhood) s;
-    		hood.lastVisit = -1;
-    	}
-    	gotNeighbors = true;   	
+        for(GraphEdge e:allEdges) {
+            Neighborhood hood1 = (Neighborhood) allNeighbors.get(e.site1);
+            Neighborhood hood2 = (Neighborhood) allNeighbors.get(e.site2);
+            hood1.neighbor.add(hood2);
+            hood2.neighbor.add(hood1);
+        }
+        // Clear the visit values.
+        for( Site s: allNeighbors) {
+            Neighborhood hood = (Neighborhood) s;
+            hood.lastVisit = -1;
+        }
+        gotNeighbors = true;
     }
     
     private void visit(Neighborhood origin, double radius, Site s, List<Site> result ) {
-    	Neighborhood hood = (Neighborhood) s;
-    	//System.out.println("Checking "+s.sitenbr+"("+hood.lastVisit+") against "+origin.sitenbr);
-    	if (hood.lastVisit == origin.sitenbr) return;
-    	
-    	hood.lastVisit = origin.sitenbr;
-    	if (hood.distance(origin) > radius ) return;
-    	result.add(hood);
-    	for( Site next: hood.neighbor) {
-    		visit(origin, radius, next, result);
-    	}
+        Neighborhood hood = (Neighborhood) s;
+        //System.out.println("Checking "+s.sitenbr+"("+hood.lastVisit+") against "+origin.sitenbr);
+        if (hood.lastVisit == origin.sitenbr) return;
+
+        hood.lastVisit = origin.sitenbr;
+        if (hood.distance(origin) > radius ) return;
+        result.add(hood);
+        for( Site next: hood.neighbor) {
+            visit(origin, radius, next, result);
+        }
     }
 
     /** Find the points within a given distance. 
@@ -108,16 +107,13 @@ public class GraphFactory extends Voronoi {
      * @return the list of other sites within the given distance.
      */
     public List<Site> closeTo(int n, double radius) {
-    	List<Site> result = new ArrayList<Site>();
-    	if (!gotNeighbors) findNeighbors();
-    	Neighborhood origin = (Neighborhood) allNeighbors.get(n);
-    	origin.lastVisit = n;
-    	for( Site s:origin.neighbor) {
-    		visit(origin, radius, s, result);
-    	}
-    	
-    	return result;
+        List<Site> result = new ArrayList<>();
+        if (!gotNeighbors) findNeighbors();
+        Neighborhood origin = (Neighborhood) allNeighbors.get(n);
+        origin.lastVisit = n;
+        for( Site s:origin.neighbor) {
+            visit(origin, radius, s, result);
+        }
+        return result;
     }
-
-
 }
