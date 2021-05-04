@@ -42,6 +42,7 @@
 
 /*
   Copyright 2011 James Humphreys. All rights reserved.
+  Copyright 2021 Geolykt.
 
 Redistribution and use in source and binary forms, with or without modification, are
 permitted provided that the following conditions are met:
