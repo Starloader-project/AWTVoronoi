@@ -7,7 +7,7 @@ Contributors:
 * Shane O'Sullivan, who encapsulated it in a C++ class, fixed memory leaks and added accessors to the Voronoi Edges
 * Zhenyu Pan: conversion to Java.
 * James Humphreys: Conversion to Maven project, refactoring, import into Sourceforge
-* Geolykt: Add methods to allow easier incooperation in java AWT code. Also the one who imported it to github
+* Geolykt: Add methods to allow easier incooperation in java AWT code. Also the one who imported it to github.
 
 Maven version :
 ===============
@@ -20,13 +20,13 @@ Version 0.2:
 * Improved encapsulation
 * Removed all graphics display code
 
-Version 0.3:
-============
+Version 0.3 (never released):
+=============================
 * fleshed out the unit test
 * Refactored to simplify subclassing
 * Added a sample subclass (us.molini.graph.GraphFactory)
 
 Version 0.4:
 ============
-* The application now makes use of AWT
+* The library now makes use of AWT
 * Light optimisations

@@ -49,7 +49,7 @@ public class GraphFactory extends Voronoi {
 
          setBorder(minX, maxX, minY, maxY);
          
-         voronoi_bd(true);
+         voronoi_bd();
          gotNeighbors = false;
 
         return allEdges;

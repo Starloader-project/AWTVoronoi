@@ -1,6 +1,5 @@
 package be.humphreys.simplevoronoi;
 
-import java.awt.Polygon;
 import java.awt.geom.Point2D;
 
 /*
@@ -82,7 +81,6 @@ public class Voronoi
     private Halfedge ELhash[];
     private Halfedge ELleftend, ELrightend;
     protected List<GraphEdge> allEdges;
-    protected List<Polygon> polygons;
 
     /*********************************************************
      * Public methods
@@ -112,7 +110,6 @@ public class Voronoi
     {
         //sites = null;
         allEdges = new LinkedList<>();
-        polygons = null;
 
         int count = xValuesIn.length;
         ArrayList<Site> input = new ArrayList<>();
@@ -129,48 +126,9 @@ public class Voronoi
         sortNode(input);
 
         setBorder(minX, maxX, minY, maxY);
-        voronoi_bd(true);
+        voronoi_bd();
 
         return allEdges;
-    }
-
-    /**
-     * Retuns a list of polygons. The list will be as large as xValuesIn.
-     *
-     * @param xValuesIn Array of X values for each site.
-     * @param yValuesIn Array of Y values for each site. Must be identical length to yValuesIn
-     * @param minX The minimum X of the bounding box around the voronoi
-     * @param maxX The maximum X of the bounding box around the voronoi
-     * @param minY The minimum Y of the bounding box around the voronoi
-     * @param maxY The maximum Y of the bounding box around the voronoi
-     * @return The generated voronoi polygons
-     */
-    public List<Polygon> generateVoronoiPolygons(double[] xValuesIn, double[] yValuesIn,
-            double minX, double maxX, double minY, double maxY)
-    {
-        //sites = null;
-        allEdges = null;
-
-        int count = xValuesIn.length;
-        polygons = new ArrayList<>(count);
-        ArrayList<Site> input = new ArrayList<>();
-       
-        // Copy the inputs so we don't modify the originals
-        for (int i = 0; i < count; i++)
-        {
-            Site s = new Site();
-            s.x = xValuesIn[i];
-            s.y = yValuesIn[i];
-            s.sitenbr = i;
-            input.add(s);
-            polygons.add(new Polygon());
-        }
-        sortNode(input);
-
-        setBorder(minX, maxX, minY, maxY);
-        voronoi_bd(false);
-
-        return polygons;
     }
 
     protected void setBorder(double minX, double maxX, double minY, double maxY) {
@@ -592,48 +550,20 @@ public class Voronoi
         return (he);
     }
 
-    private void pushGraphEdge(Site leftSite, Site rightSite, double x1, double y1, double x2, double y2, boolean legacy)
+    private void pushGraphEdge(Site leftSite, Site rightSite, double x1, double y1, double x2, double y2)
     {
-        if (legacy)
-        {
-            // Legacy "Graph Edge" mode
-            GraphEdge newEdge = new GraphEdge();
-            allEdges.add(newEdge);
-            newEdge.x1 = x1;
-            newEdge.y1 = y1;
-            newEdge.x2 = x2;
-            newEdge.y2 = y2;
+        GraphEdge newEdge = new GraphEdge();
+        allEdges.add(newEdge);
+        newEdge.x1 = x1;
+        newEdge.y1 = y1;
+        newEdge.x2 = x2;
+        newEdge.y2 = y2;
 
-            newEdge.site1 = leftSite.sitenbr;
-            newEdge.site2 = rightSite.sitenbr;
-        } else
-        {
-            // AWT "Polygon" mode
-            addPointToPolygon(polygons.get(leftSite.sitenbr), x1, y1, x2, y2);
-            addPointToPolygon(polygons.get(rightSite.sitenbr), x1, y1, x2, y2);
-        }
+        newEdge.site1 = leftSite.sitenbr;
+        newEdge.site2 = rightSite.sitenbr;
     }
 
-    private void addPointToPolygon(Polygon polygon, double x1, double y1, double x2, double y2)
-    {
-        short points = 0xFF;
-        // TODO is this an overdone disaster prevention mechanism or actually needed?
-        for (int i = 0; i < polygon.npoints; i++)
-        {
-            if (polygon.xpoints[i] == ((int)x1) && polygon.ypoints[i] == ((int)y1))
-                points &= 0x0F;
-            if (polygon.xpoints[i] == ((int)x2) && polygon.ypoints[i] == ((int)y2))
-                points &= 0xF0;
-            if (points == 0)
-                break;
-        }
-        if ((points & 0x0F) == 0x0F)
-            polygon.addPoint((int) x1, (int) y1);
-        if ((points & 0xF0) == 0xF0)
-            polygon.addPoint((int) x2, (int) y2);
-    }
-
-    private void clip_line(Edge e, boolean legacy)
+    private void clip_line(Edge e)
     {
         double pxmin, pxmax, pymin, pymax;
         Site s1, s2;
@@ -760,17 +690,17 @@ public class Voronoi
             }
         }
 
-        pushGraphEdge(e.reg[0], e.reg[1], x1, y1, x2, y2, legacy);
+        pushGraphEdge(e.reg[0], e.reg[1], x1, y1, x2, y2);
     }
 
-    private void endpoint(Edge e, int lr, Site s, boolean legacy)
+    private void endpoint(Edge e, int lr, Site s)
     {
         e.ep[lr] = s;
         if (e.ep[RE - lr] == null)
         {
             return;
         }
-        clip_line(e, legacy);
+        clip_line(e);
     }
 
     /* returns 1 if p is to right of halfedge e */
@@ -926,17 +856,7 @@ public class Voronoi
      * deltay (can all be estimates). Performance suffers if they are wrong;
      * better to make nsites, deltax, and deltay too big than too small. (?)
      */
-    @Deprecated // Only there for primitive binary compat
-    protected boolean voronoi_bd() {
-        return voronoi_bd(true);
-    }
-
-    /*
-     * implicit parameters: nsites, sqrt_nsites, xmin, xmax, ymin, ymax, deltax,
-     * deltay (can all be estimates). Performance suffers if they are wrong;
-     * better to make nsites, deltax, and deltay too big than too small. (?)
-     */
-    protected boolean voronoi_bd(boolean legacy)
+    protected boolean voronoi_bd()
     {
         Site newsite, bot, top, temp, p;
         Site v;
@@ -1023,10 +943,10 @@ public class Voronoi
                 v = lbnd.vertex; // get the vertex that caused this event
                 makevertex(v); // set the vertex number - couldn't do this
                 // earlier since we didn't know when it would be processed
-                endpoint(lbnd.ELedge, lbnd.ELpm, v, legacy);
+                endpoint(lbnd.ELedge, lbnd.ELpm, v);
                 // set the endpoint of
                 // the left HalfEdge to be this vector
-                endpoint(rbnd.ELedge, rbnd.ELpm, v, legacy);
+                endpoint(rbnd.ELedge, rbnd.ELpm, v);
                 // set the endpoint of the right HalfEdge to
                 // be this vector
                 ELdelete(lbnd); // mark the lowest HE for
@@ -1057,7 +977,7 @@ public class Voronoi
                 // with its ELedge field
                 ELinsert(llbnd, bisector); // insert the new bisector to the
                 // right of the left HE
-                endpoint(e, RE - pm, v, legacy); // set one endpoint to the new edge
+                endpoint(e, RE - pm, v); // set one endpoint to the new edge
                 // to be the vector point 'v'.
                 // If the site to the left of this bisector is higher than the
                 // right Site, then this endpoint
@@ -1086,7 +1006,7 @@ public class Voronoi
         for (lbnd = ELright(ELleftend); lbnd != ELrightend; lbnd = ELright(lbnd))
         {
             e = lbnd.ELedge;
-            clip_line(e, legacy);
+            clip_line(e);
         }
 
         return true;
